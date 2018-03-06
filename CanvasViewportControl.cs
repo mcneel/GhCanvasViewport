@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace GhCanvasViewport
@@ -60,13 +57,13 @@ namespace GhCanvasViewport
             mnu.RadioCheck = true;
             mnu.Click += (s, args) => CanvasViewport.DockPanel(Parent, AnchorStyles.Top | AnchorStyles.Left);
             dockMenu.MenuItems.Add(mnu);
-            mnu = new MenuItem("Bottom Left");
-            mnu.RadioCheck = true;
-            mnu.Click += (s, args) => CanvasViewport.DockPanel(Parent, AnchorStyles.Bottom | AnchorStyles.Left);
-            dockMenu.MenuItems.Add(mnu);
             mnu = new MenuItem("Top Right");
             mnu.RadioCheck = true;
             mnu.Click += (s, args) => CanvasViewport.DockPanel(Parent, AnchorStyles.Top | AnchorStyles.Right);
+            dockMenu.MenuItems.Add(mnu);
+            mnu = new MenuItem("Bottom Left");
+            mnu.RadioCheck = true;
+            mnu.Click += (s, args) => CanvasViewport.DockPanel(Parent, AnchorStyles.Bottom | AnchorStyles.Left);
             dockMenu.MenuItems.Add(mnu);
             mnu = new MenuItem("Bottom Right");
             mnu.RadioCheck = true;
@@ -84,6 +81,7 @@ namespace GhCanvasViewport
 
             contextMenu.MenuItems.Add("Zoom Extents", (s, e) =>
             {
+                Viewport.Camera35mmLensLength = 50;
                 Viewport.ZoomExtents();
                 Refresh();
             });

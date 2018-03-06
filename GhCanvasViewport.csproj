@@ -54,6 +54,7 @@
     </Reference>
     <Reference Include="RhinoWindows, Version=6.0.18016.23451, Culture=neutral, PublicKeyToken=552281e97c755530, processorArchitecture=MSIL">
       <HintPath>packages\RhinoWindows.6.0.18016.23451-test3\lib\net45\RhinoWindows.dll</HintPath>
+      <Private>False</Private>
     </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core" />

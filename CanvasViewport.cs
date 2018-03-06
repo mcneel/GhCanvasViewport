@@ -1,8 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Runtime.InteropServices;
+using System.Drawing;
 using System.Windows.Forms;
-using Grasshopper.Kernel;
+using Grasshopper.GUI.Canvas;
 
 namespace GhCanvasViewport
 {
@@ -44,7 +44,7 @@ namespace GhCanvasViewport
                     {
                         for (int j = 0; j < menuitem.DropDownItems.Count; j++)
                         {
-                            if (menuitem.DropDownItems[j].Text.StartsWith("gumball", StringComparison.OrdinalIgnoreCase))
+                            if (menuitem.DropDownItems[j].Text.StartsWith("canvas widgets", StringComparison.OrdinalIgnoreCase))
                             {
                                 var viewportMenuItem = new ToolStripMenuItem("Canvas Viewport");
                                 viewportMenuItem.CheckOnClick = true;
@@ -56,7 +56,12 @@ namespace GhCanvasViewport
                                         viewportMenuItem.Checked = false;
                                 };
                                 viewportMenuItem.CheckedChanged += ViewportMenuItem_CheckedChanged;
-                                menuitem.DropDownItems.Insert(j, viewportMenuItem);
+                                var canvasWidgets = menuitem.DropDownItems[j] as ToolStripMenuItem;
+                                if (canvasWidgets != null)
+                                {
+                                    canvasWidgets.DropDownOpening += (s,args) =>
+                                        canvasWidgets.DropDownItems.Insert(0, viewportMenuItem);
+                                }
                                 break;
                             }
                         }
@@ -66,6 +71,9 @@ namespace GhCanvasViewport
             }
         }
 
+        /// <summary>
+        /// Panel with a "resizable" border that contains a viewport control
+        /// </summary>
         class ViewportContainerPanel : Panel
         {
             public override Cursor Cursor
@@ -215,6 +223,15 @@ namespace GhCanvasViewport
 
         void ViewportMenuItem_CheckedChanged(object sender, EventArgs e)
         {
+            var v = Rhino.RhinoApp.Version;
+            if (v.Major < 6 || (v.Major == 6 && v.Minor < 3))
+            {
+                // The viewport control does not work very well pre 6.3
+                Rhino.UI.Dialogs.ShowMessage("Canvas viewport requires Rhino 6.3 or greater version", "New Version Required");
+                return;
+            }
+
+
             var menuitem = sender as ToolStripMenuItem;
             if (menuitem != null)
             {
@@ -235,6 +252,7 @@ namespace GhCanvasViewport
                         _viewportControlPanel.Location = new System.Drawing.Point(0, 0);
                         _viewportControlPanel.Anchor = AnchorStyles.Top | AnchorStyles.Left;
                         Grasshopper.Instances.ActiveCanvas.Controls.Add(_viewportControlPanel);
+                        Dock(AnchorStyles.Top | AnchorStyles.Right);
                     }
                     _viewportControlPanel.Show();
 
