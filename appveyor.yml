@@ -1,0 +1,28 @@
+# version format
+version: 1.0.{build}
+
+# branches to build
+branches:
+  # whitelist
+  only:
+    - master
+
+# Maximum number of concurrent jobs for the project
+max_jobs: 1
+
+
+# Build worker image (VM template)
+image: Visual Studio 2017
+
+# build platform, i.e. x86, x64, Any CPU. This setting is optional.
+platform: Any CPU
+
+# build Configuration, i.e. Debug, Release, etc.
+configuration: Release
+
+build:
+  parallel: true                  # enable MSBuild parallel builds
+  project: GhCanvasViewport.sln      # path to Visual Studio solution or project
+
+  # MSBuild verbosity level
+  verbosity: quiet|minimal|normal|detailed
