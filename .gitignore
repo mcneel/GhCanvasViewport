@@ -2,3 +2,7 @@
 /obj
 /.vs
 /packages
+
+# yak deploy
+dist
+script/yak.exe
