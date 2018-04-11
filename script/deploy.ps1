@@ -2,7 +2,7 @@ $ErrorActionPreference = "Stop" # exit on error
 
 # set version
 $file = 'dist\manifest.yml'
-$build = 1
+$build = $env:appveyor_build_number
 (Get-Content $file).replace('1.0.0-dev', "1.0.0-dev.$build") | Set-Content $file
 
 # copy .gha to dist/
