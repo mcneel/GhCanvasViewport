@@ -2,3 +2,6 @@
 /obj
 /.vs
 /packages
+
+# staging dir for deploying to yak
+dist
