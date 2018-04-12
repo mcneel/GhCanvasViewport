@@ -27,6 +27,8 @@ namespace GhCanvasViewport
         {
             get
             {
+                // use AssemblyInformationalVersion since this can be patched easily during CI builds
+                // to keep it in sync with the yak package version
                 return System.Diagnostics.FileVersionInfo.GetVersionInfo(System.Reflection.Assembly.GetExecutingAssembly().Location).ProductVersion;
             }
         }
