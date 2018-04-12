@@ -8,6 +8,7 @@ branches:
     - will/yak-ci # TODO: switch back to master after testing
 
 environment:
+  ASSEMBLY_VERSION: '1.0.*'
   YAK_PACKAGE_VERSION: 1.0.0-dev.$(APPVEYOR_BUILD_NUMBER)
 
 # Maximum number of concurrent jobs for the project
@@ -36,7 +37,7 @@ build:
 assembly_info:
   patch: true
   file: 'Properties\AssemblyInfo.cs'
-  # assembly_version: '{version}'
+  assembly_version: $(ASSEMBLY_VERSION)
   # assembly_file_version: '{version}'
   assembly_informational_version: $(YAK_PACKAGE_VERSION)
 
