@@ -8,7 +8,7 @@ branches:
     - will/yak-ci # TODO: switch back to master after testing
 
 environment:
-  ASSEMBLY_VERSION: '1.0.*'
+  ASSEMBLY_VERSION: '1.0.0'
   YAK_PACKAGE_VERSION: 1.0.0-dev.$(APPVEYOR_BUILD_NUMBER)
 
 # Maximum number of concurrent jobs for the project
