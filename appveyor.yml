@@ -7,6 +7,9 @@ branches:
   only:
     - will/yak-ci # TODO: switch back to master after testing
 
+environment:
+  YAK_PACKAGE_VERSION: '1.0.0-dev.{build}'
+
 # Maximum number of concurrent jobs for the project
 max_jobs: 1
 
@@ -35,7 +38,7 @@ assembly_info:
   file: 'Properties\AssemblyInfo.cs'
   # assembly_version: '{version}'
   # assembly_file_version: '{version}'
-  assembly_informational_version: '1.0.0-dev.{build}'
+  assembly_informational_version: $(YAK_PACKAGE_VERSION)
 
 # publish prerelease build to yak
 deploy_script:
