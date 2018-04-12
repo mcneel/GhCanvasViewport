@@ -23,6 +23,13 @@ namespace GhCanvasViewport
                 return "GhCanvasViewport";
             }
         }
+        public override string Version
+        {
+            get
+            {
+                return System.Diagnostics.FileVersionInfo.GetVersionInfo(System.Reflection.Assembly.GetExecutingAssembly().Location).ProductVersion;
+            }
+        }
         public override Bitmap Icon
         {
             get
