@@ -5,7 +5,7 @@ version: '{build}' # prefer not to use the version number for the build number
 branches:
   # whitelist
   only:
-    - will/yak-ci # TODO: switch back to master after testing
+    - will/yak-ci-tidy # TODO: switch back to master after testing
 
 # environment variables
 environment:
