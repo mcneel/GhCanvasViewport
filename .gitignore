@@ -3,5 +3,6 @@
 /.vs
 /packages
 
-# staging dir for deploying to yak
+# yak deploy
 dist
+script/yak.exe
