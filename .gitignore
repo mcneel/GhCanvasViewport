@@ -2,6 +2,7 @@
 /obj
 /.vs
 /packages
+/GhCanvasViewport.csproj.user
 
 # yak deploy
 dist

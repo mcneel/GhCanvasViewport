@@ -52,6 +52,25 @@ namespace GhCanvasViewport
         void ShowContextMenu(System.Drawing.Point location)
         {
             var contextMenu = new ContextMenu();
+
+            var displayModeMenu = new MenuItem("Display Mode");
+            var modes = Rhino.Display.DisplayModeDescription.GetDisplayModes();
+            var current = Viewport.DisplayMode.Id;
+            foreach (var mode in modes)
+            {
+                var modeMenuItem = new MenuItem(mode.LocalName);
+                modeMenuItem.RadioCheck = true;
+                modeMenuItem.Checked = (current == mode.Id);
+                modeMenuItem.Click += (s, e) => 
+                {
+                    Viewport.DisplayMode = mode;
+                    Invalidate();
+                };
+                displayModeMenu.MenuItems.Add(modeMenuItem);
+                displayModeMenu.Tag = mode.Id;
+            }
+            contextMenu.MenuItems.Add(displayModeMenu);
+
             var dockMenu = new MenuItem("Dock");
             var mnu = new MenuItem("Top Left");
             mnu.RadioCheck = true;
