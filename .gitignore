@@ -3,3 +3,7 @@
 /.vs
 /packages
 /GhCanvasViewport.csproj.user
+
+# yak deploy
+dist
+script/yak.exe

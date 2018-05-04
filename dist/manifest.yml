@@ -1,0 +1,9 @@
+---
+name: GhCanvasViewport
+version: 1.0.0-dev
+authors:
+- Steve Baer
+description: Rhino viewport control embedded in the Grasshopper canvas
+url: https://github.com/mcneel/GhCanvasViewport
+secret:
+  id: 406bd915-c42a-4f97-8ce4-4934600b43ff
