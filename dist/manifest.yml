@@ -1,6 +1,6 @@
 ---
 name: GhCanvasViewport
-version: 1.0.0-dev
+version: 1.0.1
 authors:
 - Steve Baer
 description: Rhino viewport control embedded in the Grasshopper canvas
