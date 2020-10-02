@@ -55,12 +55,15 @@ namespace GhCanvasViewport
 
             var displayModeMenu = new MenuItem("Display Mode");
             var modes = Rhino.Display.DisplayModeDescription.GetDisplayModes();
-            var current = Viewport.DisplayMode.Id;
+            var currentModeId = Guid.Empty;
+            if (Viewport.DisplayMode != null)
+                currentModeId = Viewport.DisplayMode.Id;
+
             foreach (var mode in modes)
             {
                 var modeMenuItem = new MenuItem(mode.LocalName);
                 modeMenuItem.RadioCheck = true;
-                modeMenuItem.Checked = (current == mode.Id);
+                modeMenuItem.Checked = (currentModeId == mode.Id);
                 modeMenuItem.Click += (s, e) => 
                 {
                     Viewport.DisplayMode = mode;
