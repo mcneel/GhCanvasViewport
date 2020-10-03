@@ -11,11 +11,8 @@ version: '{build}' # prefer not to use the version number for the build number
 environment:
   # current major.minor.patch version number
   assembly_version: '1.0.1'
-  # package version with prerelease identifiers
+  # package version (with optional prerelease identifiers)
   yak_package_version: $(assembly_version)
-
-# Maximum number of concurrent jobs for the project
-max_jobs: 1
 
 # Build worker image (VM template)
 image: Visual Studio 2019
@@ -34,7 +31,7 @@ build:
   project: GhCanvasViewport.sln      # path to Visual Studio solution or project
 
   # MSBuild verbosity level
-  verbosity: normal
+  verbosity: minimal
 
 # patch assembly info
 assembly_info:

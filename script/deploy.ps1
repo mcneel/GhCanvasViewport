@@ -1,6 +1,6 @@
 # script/deploy.ps1: Create a yak package and push it to the server
 
-$ErrorActionPreference = "Stop" # exit on error
+$ErrorActionPreference = 'Stop' # exit on error
 
 Push-Location
 cd "$(Split-Path $MyInvocation.MyCommand.Path)\..\dist"
@@ -17,10 +17,12 @@ Invoke-WebRequest -Uri $url -OutFile $yak
 # TODO: make script generic by moving files to command line args?
 Copy-Item -Path ..\bin\GhCanvasViewport.gha -Destination .
 
+# $ErrorActionPreference = 'Continue'
+
 # build package
-& $yak build #--version $env:yak_package_version
+& $yak build 2>&1 #--version $env:yak_package_version 2>&1
 
 # publish
-& $yak push *.yak
+# & $yak push *.yak
 
 Pop-Location
