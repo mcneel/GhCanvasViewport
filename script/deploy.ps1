@@ -3,7 +3,7 @@
 $ErrorActionPreference = "Stop" # exit on error
 
 Push-Location
-cd (Split-Path $MyInvocation.MyCommand.Path)\..\dist
+cd "$(Split-Path $MyInvocation.MyCommand.Path)\..\dist"
 # $dist = '..\dist'
 
 # get yak.exe
