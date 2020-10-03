@@ -43,6 +43,7 @@ assembly_info:
 # publish prerelease build to yak (master only)
 deploy_script:
   - curl -fSLo yak.exe https://files.mcneel.com/yak/tools/latest/yak.exe
+    && yak.exe version
     && copy bin\GhCanvasViewport.gha dist
     && cd dist
     && ..\yak.exe build
