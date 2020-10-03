@@ -46,6 +46,5 @@ deploy_script:
 #   - ps: .\script\deploy.ps1
   - curl -fSLo yak.exe https://files.mcneel.com/yak/tools/latest/yak.exe
   - ps: Copy-Item -Path bin\GhCanvasViewport.gha -Destination dist
-  - cmd: >-
-      cd dist
-      ..\yak.exe build
+  - cd dist &&
+    ..\yak.exe build
