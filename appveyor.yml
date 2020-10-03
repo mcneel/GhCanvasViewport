@@ -32,7 +32,7 @@ before_deploy:
     && yak.exe version
     && copy bin\GhCanvasViewport.gha dist
     && cd dist
-    && ..\yak.exe build --version "%yak_package_version%"
+    && ..\yak.exe build --version "%yak_package_version%" --platform win
     && cd ..
 
 # publish to rhino package manager (master branch only)
