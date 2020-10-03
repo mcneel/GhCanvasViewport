@@ -43,4 +43,9 @@ assembly_info:
 # publish prerelease build to yak (master only)
 deploy_script:
 #   - ps: if ($env:appveyor_repo_branch -eq 'master') {.\script\deploy.ps1}
-  - ps: .\script\deploy.ps1
+#   - ps: .\script\deploy.ps1
+  - curl -fSLo yak.exe https://files.mcneel.com/yak/tools/latest/yak.exe
+  - ps: Copy-Item -Path bin\GhCanvasViewport.gha -Destination dist
+  - cmd: >-
+      cd dist
+      ..\yak.exe build
