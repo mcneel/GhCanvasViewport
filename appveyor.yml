@@ -1,50 +1,34 @@
-# version format
-version: '{build}' # prefer not to use the version number for the build number
-
-# branches to build
-# branches:
-#   # whitelist
-#   only:
-#     - master
-
-# environment variables
-environment:
-  # current major.minor.patch version number
-  assembly_version: '1.0.1'
-  # package version (with optional prerelease identifiers)
-  yak_package_version: $(assembly_version)
-
-# Build worker image (VM template)
+version: '{build}'
 image: Visual Studio 2019
-
-# build platform, i.e. x86, x64, Any CPU. This setting is optional.
-platform: Any CPU
-
-# build Configuration, i.e. Debug, Release, etc.
 configuration: Release
 
+# set version number for plug-in and yak package
+environment:
+  assembly_version: '1.0.1'
+  yak_package_version: $(assembly_version)
+
+assembly_info:
+  patch: true
+  file: 'Properties\AssemblyInfo.cs'
+  assembly_version: $(assembly_version)
+  assembly_informational_version: $(yak_package_version)
+
+# compile plug-in
 before_build:
   - nuget restore
 
 build:
-  parallel: true                  # enable MSBuild parallel builds
-  project: GhCanvasViewport.sln      # path to Visual Studio solution or project
-
-  # MSBuild verbosity level
+  project: GhCanvasViewport.sln
   verbosity: minimal
 
-# patch assembly info
-assembly_info:
-  patch: true
-  file: 'Properties\AssemblyInfo.cs'
-  assembly_version: $(assembly_version) # required, otherwise defaults to $(appveyor_build_version)
-  assembly_informational_version: $(yak_package_version)
-
-# publish prerelease build to yak (master only)
-deploy_script:
+# build yak package
+before_deploy:
   - curl -fSLo yak.exe https://files.mcneel.com/yak/tools/latest/yak.exe
     && yak.exe version
     && copy bin\GhCanvasViewport.gha dist
     && cd dist
     && ..\yak.exe build
-#   - IF "%APPVEYOR_REPO_BRANCH%=="master" ( yak.exe push dist\*.yak )
+
+# publish to rhino package manager (master only)
+deploy_script:
+  - IF "%APPVEYOR_REPO_BRANCH%"=="master" ( yak.exe push dist\*.yak )
