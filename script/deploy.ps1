@@ -17,12 +17,14 @@ Invoke-WebRequest -Uri $url -OutFile $yak
 # TODO: make script generic by moving files to command line args?
 Copy-Item -Path ..\bin\GhCanvasViewport.gha -Destination .
 
-# $ErrorActionPreference = 'Continue'
+$ErrorActionPreference = 'Continue'
 
 # build package
-Start-Process -FilePath $yak -ArgumentList 'build' -Wait -NoNewWindow -PassThru #--version $env:yak_package_version 2>&1
+& $yak build #--version $env:yak_package_version 2>&1
+if ($?) { exit 1 }
 
 # publish
 # & $yak push *.yak
+# if ($?) { exit 1 }
 
 Pop-Location
