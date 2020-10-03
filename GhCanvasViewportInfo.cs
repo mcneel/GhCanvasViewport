@@ -6,16 +6,6 @@ namespace GhCanvasViewport
 {
     public class GhCanvasViewportInfo : GH_AssemblyInfo
     {
-        static CanvasViewport _canvasViewport;
-        public GhCanvasViewportInfo()
-        {
-            if (_canvasViewport == null)
-            {
-                _canvasViewport = new CanvasViewport();
-                _canvasViewport.AddToMenu();
-            }
-        }
-
         public override string Name
         {
             get
