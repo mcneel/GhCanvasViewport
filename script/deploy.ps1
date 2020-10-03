@@ -20,7 +20,7 @@ Copy-Item -Path ..\bin\GhCanvasViewport.gha -Destination .
 # $ErrorActionPreference = 'Continue'
 
 # build package
-iex "& $yak build" 2>&1 #--version $env:yak_package_version 2>&1
+Start-Process -FilePath $yak -ArgumentList 'build' -Wait 2>&1 #--version $env:yak_package_version 2>&1
 
 # publish
 # & $yak push *.yak
