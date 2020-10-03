@@ -3,28 +3,24 @@
 $ErrorActionPreference = "Stop" # exit on error
 
 Push-Location
-cd (Split-Path $MyInvocation.MyCommand.Path)
-
-# set version
-$dist = '..\dist'
-$file = "$dist\manifest.yml"
-(Get-Content $file) -replace "version:\s*\S+", "version: $env:yak_package_version" | Set-Content $file
-
-# copy .gha to dist/
-# TODO: make script generic by moving files to command line args?
-Copy-Item -Path ..\bin\GhCanvasViewport.gha -Destination $dist
-
-# zip (create package manually)
-Compress-Archive -Path $dist\* -DestinationPath $dist\build.zip -Force
+cd (Split-Path $MyInvocation.MyCommand.Path)\..\dist
+# $dist = '..\dist'
 
 # get yak.exe
 $url = 'http://files.mcneel.com/yak/tools/latest/yak.exe'
-$yak = '.\yak.exe'
+$yak = '..\yak.exe'
 # Write-Host (New-Object System.Net.WebClient).DownloadFile($url, $yak) # not working
 Invoke-WebRequest -Uri $url -OutFile $yak
+& $yak version
+
+# copy .gha to dist/
+# TODO: make script generic by moving files to command line args?
+Copy-Item -Path ..\bin\GhCanvasViewport.gha -Destination .
+
+# build package
+& $yak build #--version $env:yak_package_version
 
 # publish
-& $yak version
-& $yak push $dist\build.zip
+& $yak push *.yak
 
 Pop-Location
