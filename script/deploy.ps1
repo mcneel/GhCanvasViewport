@@ -17,7 +17,7 @@ Invoke-WebRequest -Uri $url -OutFile $yak
 # TODO: make script generic by moving files to command line args?
 Copy-Item -Path ..\bin\GhCanvasViewport.gha -Destination .
 
-$ErrorActionPreference = 'Continue'
+$ErrorActionPreference = 'SilentlyContinue'
 
 # build package
 & $yak build #--version $env:yak_package_version 2>&1
