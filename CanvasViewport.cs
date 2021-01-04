@@ -1,15 +1,21 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Drawing;
 using System.Windows.Forms;
-using Grasshopper.GUI.Canvas;
+using GhCanvasViewport.Properties;
+using Grasshopper;
+using RhinoWindows.Forms.Controls;
 
 namespace GhCanvasViewport
 {
     class CanvasViewport
     {
         Eto.Forms.UITimer _timer;
-        Panel _viewportControlPanel;
+        static Panel _viewportControlPanel;
+        static ViewportControl ctrl;
+        static PictureBox lockedPic1;
+        static PictureBox lockedPic2;
+        public static ToolStripMenuItem viewportMenuItem;
+        static IniFile MyIni = new IniFile(Folders.AppDataFolder + "GhCanvasViewport.ini");
 
         public void AddToMenu()
         {
@@ -21,9 +27,32 @@ namespace GhCanvasViewport
             _timer.Start();
         }
 
-        void SetupMenu(object sender, EventArgs e)
+        public void SetupMenu(object sender, EventArgs e)
         {
-            var editor = Grasshopper.Instances.DocumentEditor;
+            if (!MyIni.KeyExists("state"))
+            { MyIni.Write("state", "false"); }
+            if (!MyIni.KeyExists("width"))
+            { MyIni.Write("width", "400"); }
+            if (!MyIni.KeyExists("height"))
+            { MyIni.Write("height", "300"); }
+            if (!MyIni.KeyExists("dock"))
+            { MyIni.Write("dock", "topleft"); }
+            if (!MyIni.KeyExists("locked1"))
+            { MyIni.Write("locked1", "false"); }
+            if (!MyIni.KeyExists("locked2"))
+            { MyIni.Write("locked2", "false"); }
+            if (!MyIni.KeyExists("icontoggle"))
+            { MyIni.Write("icontoggle", "false"); }
+            if (!MyIni.KeyExists("dockicons"))
+            { MyIni.Write("dockicons", "topleft"); }
+            if (!MyIni.KeyExists("iconstyle"))
+            { MyIni.Write("iconstyle", "colored"); }
+            var state = bool.Parse(MyIni.Read("state"));
+            var width = int.Parse(MyIni.Read("width"));
+            var height = int.Parse(MyIni.Read("height"));
+            var dock = MyIni.Read("dock");
+
+            var editor = Instances.DocumentEditor;
             if (null == editor || editor.Handle == IntPtr.Zero)
                 return;
 
@@ -32,9 +61,9 @@ namespace GhCanvasViewport
                 return;
 
             _timer.Stop();
-            foreach (var ctrl in controls)
+            foreach (var ctrl2 in controls)
             {
-                var menu = ctrl as Grasshopper.GUI.GH_MenuStrip;
+                var menu = ctrl2 as Grasshopper.GUI.GH_MenuStrip;
                 if (menu == null)
                     continue;
                 for (int i = 0; i < menu.Items.Count; i++)
@@ -46,20 +75,51 @@ namespace GhCanvasViewport
                         {
                             if (menuitem.DropDownItems[j].Text.StartsWith("canvas widgets", StringComparison.OrdinalIgnoreCase))
                             {
-                                var viewportMenuItem = new ToolStripMenuItem("Canvas Viewport");
+                                viewportMenuItem = new ToolStripMenuItem("Canvas Viewport", Resources.picture, new EventHandler(OnToggle));
+                                viewportMenuItem.ToolTipText = "Opens a docked window in Grasshopper that displays Rhino viewports.\r\n - Use the right-click menu to change display modes, views, and other settings.";
                                 viewportMenuItem.CheckOnClick = true;
-                                menuitem.DropDownOpened += (s, args) => 
+                                viewportMenuItem.Checked = state;
+
+                                if (state)
+                                {
+                                    if (_viewportControlPanel == null)
+                                    {
+                                        _viewportControlPanel = new ViewportContainerPanel();
+                                        _viewportControlPanel.Size = new Size(width, height);
+                                        _viewportControlPanel.MinimumSize = new Size(50, 50);
+                                        _viewportControlPanel.Padding = new Padding(10);
+                                        ctrl = new CanvasViewportControl();
+                                        ctrl.Dock = DockStyle.Fill;
+                                        _viewportControlPanel.BorderStyle = BorderStyle.FixedSingle;
+                                        UpdateViewport(false);
+                                        _viewportControlPanel.Controls.Add(ctrl);
+                                        _viewportControlPanel.Location = new Point(0, 0);
+                                        Instances.ActiveCanvas.Controls.Add(_viewportControlPanel);
+                                        if (dock == "topleft")
+                                        { Dock(AnchorStyles.Top | AnchorStyles.Left); }
+                                        if (dock == "bottomleft")
+                                        { Dock(AnchorStyles.Bottom | AnchorStyles.Left); }
+                                        if (dock == "bottomright")
+                                        { Dock(AnchorStyles.Bottom | AnchorStyles.Right); }
+                                        if (dock == "topright")
+                                        { Dock(AnchorStyles.Top | AnchorStyles.Right); }
+                                    }
+                                    _viewportControlPanel.Show();
+                                    MyIni.Write("state", "true");
+                                }
+                                else
                                 {
                                     if (_viewportControlPanel != null && _viewportControlPanel.Visible)
-                                        viewportMenuItem.Checked = true;
-                                    else
-                                        viewportMenuItem.Checked = false;
-                                };
+                                    {
+                                        _viewportControlPanel.Hide();
+                                        MyIni.Write("state", "false");
+                                    }
+                                }
                                 viewportMenuItem.CheckedChanged += ViewportMenuItem_CheckedChanged;
                                 var canvasWidgets = menuitem.DropDownItems[j] as ToolStripMenuItem;
                                 if (canvasWidgets != null)
                                 {
-                                    canvasWidgets.DropDownOpening += (s,args) =>
+                                    canvasWidgets.DropDownOpening += (s, args) =>
                                         canvasWidgets.DropDownItems.Insert(0, viewportMenuItem);
                                 }
                                 break;
@@ -72,7 +132,7 @@ namespace GhCanvasViewport
         }
 
         /// <summary>
-        /// Panel with a "resizable" border that contains a viewport control
+        /// Panel with a "re-sizable" border that contains a viewport control
         /// </summary>
         class ViewportContainerPanel : Panel
         {
@@ -102,7 +162,7 @@ namespace GhCanvasViewport
                 set => base.Cursor = value;
             }
 
-            Mode ComputeMode(System.Drawing.Point location)
+            Mode ComputeMode(Point location)
             {
                 var dock = Anchor;
                 switch (Anchor)
@@ -153,8 +213,8 @@ namespace GhCanvasViewport
                 return Mode.None;
             }
 
-            System.Drawing.Point LeftMouseDownLocation { get; set; }
-            System.Drawing.Size LeftMouseDownSize { get; set; }
+            Point LeftMouseDownLocation { get; set; }
+            Size LeftMouseDownSize { get; set; }
 
             enum Mode
             {
@@ -169,7 +229,7 @@ namespace GhCanvasViewport
             protected override void OnMouseDown(MouseEventArgs e)
             {
                 _mode = Mode.None;
-                if(e.Button == MouseButtons.Left)
+                if (e.Button == MouseButtons.Left)
                 {
                     _mode = ComputeMode(e.Location);
                     LeftMouseDownLocation = e.Location;
@@ -179,7 +239,7 @@ namespace GhCanvasViewport
             }
             protected override void OnMouseMove(MouseEventArgs e)
             {
-                if(_mode!=Mode.None)
+                if (_mode != Mode.None)
                 {
                     int x = Location.X;
                     int y = Location.Y;
@@ -188,29 +248,31 @@ namespace GhCanvasViewport
 
                     int deltaX = e.X - LeftMouseDownLocation.X;
                     int deltaY = e.Y - LeftMouseDownLocation.Y;
-                    if( _mode == Mode.SizeNESW || _mode == Mode.SizeNS || _mode == Mode.SizeNWSE)
+                    if (_mode == Mode.SizeNESW || _mode == Mode.SizeNS || _mode == Mode.SizeNWSE)
                     {
                         if ((Anchor & AnchorStyles.Top) == AnchorStyles.Top)
                             height = LeftMouseDownSize.Height + deltaY;
                         if ((Anchor & AnchorStyles.Bottom) == AnchorStyles.Bottom)
                         {
-                            var pt = new System.Drawing.Point(Location.X, Location.Y + deltaY);
+                            var pt = new Point(Location.X, Location.Y + deltaY);
                             height = Height - (pt.Y - Location.Y);
                             y = Location.Y + deltaY;
                         }
                     }
-                    if(_mode == Mode.SizeNESW || _mode == Mode.SizeWE || _mode == Mode.SizeNWSE)
+                    if (_mode == Mode.SizeNESW || _mode == Mode.SizeWE || _mode == Mode.SizeNWSE)
                     {
                         if ((Anchor & AnchorStyles.Left) == AnchorStyles.Left)
                             width = LeftMouseDownSize.Width + deltaX;
                         if ((Anchor & AnchorStyles.Right) == AnchorStyles.Right)
                         {
-                            var pt = new System.Drawing.Point(Location.X + deltaX, Location.Y);
+                            var pt = new Point(Location.X + deltaX, Location.Y);
                             width = Width - (pt.X - Location.X);
                             x = Location.X + deltaX;
                         }
                     }
                     SetBounds(x, y, width, height);
+                    MyIni.Write("width", width.ToString());
+                    MyIni.Write("height", height.ToString());
                 }
                 base.OnMouseMove(e);
             }
@@ -221,7 +283,7 @@ namespace GhCanvasViewport
             }
         }
 
-        void ViewportMenuItem_CheckedChanged(object sender, EventArgs e)
+        public static void ViewportMenuItem_CheckedChanged(object sender, EventArgs e)
         {
             var v = Rhino.RhinoApp.Version;
             if (v.Major < 6 || (v.Major == 6 && v.Minor < 3))
@@ -230,7 +292,9 @@ namespace GhCanvasViewport
                 Rhino.UI.Dialogs.ShowMessage("Canvas viewport requires Rhino 6.3 or greater version", "New Version Required");
                 return;
             }
-
+            var width = int.Parse(MyIni.Read("width"));
+            var height = int.Parse(MyIni.Read("height"));
+            var dock = MyIni.Read("dock");
 
             var menuitem = sender as ToolStripMenuItem;
             if (menuitem != null)
@@ -240,33 +304,99 @@ namespace GhCanvasViewport
                     if (_viewportControlPanel == null)
                     {
                         _viewportControlPanel = new ViewportContainerPanel();
-                        _viewportControlPanel.Size = new System.Drawing.Size(400, 300);
-                        _viewportControlPanel.MinimumSize = new System.Drawing.Size(50, 50);
+                        _viewportControlPanel.Size = new Size(width, height);
+                        _viewportControlPanel.MinimumSize = new Size(50, 50);
                         _viewportControlPanel.Padding = new Padding(10);
-                        var ctrl = new CanvasViewportControl();
+                        ctrl = new CanvasViewportControl();
                         ctrl.Dock = DockStyle.Fill;
-
-                        //ctrl.ContextMenu = contextMenu;
                         _viewportControlPanel.BorderStyle = BorderStyle.FixedSingle;
+                        UpdateViewport(false);
                         _viewportControlPanel.Controls.Add(ctrl);
-                        _viewportControlPanel.Location = new System.Drawing.Point(0, 0);
-                        _viewportControlPanel.Anchor = AnchorStyles.Top | AnchorStyles.Left;
-                        Grasshopper.Instances.ActiveCanvas.Controls.Add(_viewportControlPanel);
-                        Dock(AnchorStyles.Top | AnchorStyles.Right);
+                        _viewportControlPanel.Location = new Point(0, 0);
+                        Instances.ActiveCanvas.Controls.Add(_viewportControlPanel);
+                        if (dock == "topleft")
+                        { Dock(AnchorStyles.Top | AnchorStyles.Left); }
+                        if (dock == "bottomleft")
+                        { Dock(AnchorStyles.Bottom | AnchorStyles.Left); }
+                        if (dock == "bottomright")
+                        { Dock(AnchorStyles.Bottom | AnchorStyles.Right); }
+                        if (dock == "topright")
+                        { Dock(AnchorStyles.Top | AnchorStyles.Right); }
                     }
                     _viewportControlPanel.Show();
-
+                    MyIni.Write("state", "true");
                 }
                 else
                 {
                     if (_viewportControlPanel != null && _viewportControlPanel.Visible)
+                    {
                         _viewportControlPanel.Hide();
-
+                        MyIni.Write("state", "false");
+                    }
                 }
             }
         }
 
-        void Dock(AnchorStyles anchor)
+        public static void UpdateViewport(bool flag)
+        {
+            if (flag)
+            {
+                ctrl.Controls.Remove(lockedPic1);
+                ctrl.Controls.Remove(lockedPic2);
+            }
+            bool icontoggle = bool.Parse(MyIni.Read("icontoggle"));
+            if (!icontoggle)
+            {
+                var dockicons = MyIni.Read("dockicons");
+                var iconstyle = MyIni.Read("iconstyle");
+                bool locked1 = bool.Parse(MyIni.Read("locked1"));
+                lockedPic1 = new PictureBox();
+                bool locked2 = bool.Parse(MyIni.Read("locked2"));
+                lockedPic2 = new PictureBox();
+                if (locked1)
+                { if (iconstyle == "colored") { lockedPic1.Image = Resources.rotation_off; } else { lockedPic1.Image = Resources.rotation_off_s; } }
+                else
+                { if (iconstyle == "colored") { lockedPic1.Image = Resources.rotation_on; } else { lockedPic1.Image = Resources.rotation_on_s; } }
+                lockedPic1.Size = new Size(16, 16);
+                if (dockicons == "topleft")
+                { DockIcons(lockedPic1, AnchorStyles.Top | AnchorStyles.Left, 3, 3); }
+                if (dockicons == "bottomleft")
+                { DockIcons(lockedPic1, AnchorStyles.Bottom | AnchorStyles.Left, -3, 3); }
+                if (dockicons == "bottomright")
+                { DockIcons(lockedPic1, AnchorStyles.Bottom | AnchorStyles.Right, -3, -24); }
+                if (dockicons == "topright")
+                { DockIcons(lockedPic1, AnchorStyles.Top | AnchorStyles.Right, 3, -24); }
+                lockedPic1.BackColor = Rhino.ApplicationSettings.AppearanceSettings.ViewportBackgroundColor;
+                lockedPic1.BringToFront();
+                ctrl.Controls.Add(lockedPic1);
+                if (locked2)
+                { if (iconstyle == "colored") { lockedPic2.Image = Resources.drag_off; } else { lockedPic2.Image = Resources.drag_off_s; } }
+                else
+                { if (iconstyle == "colored") { lockedPic2.Image = Resources.drag_on; } else { lockedPic2.Image = Resources.drag_on_s; } }
+                lockedPic2.Size = new Size(16, 16);
+                if (dockicons == "topleft")
+                { DockIcons(lockedPic2, AnchorStyles.Top | AnchorStyles.Left, 3, 24); }
+                if (dockicons == "bottomleft")
+                { DockIcons(lockedPic2, AnchorStyles.Bottom | AnchorStyles.Left, -3, 24); }
+                if (dockicons == "bottomright")
+                { DockIcons(lockedPic2, AnchorStyles.Bottom | AnchorStyles.Right, -3, -3); }
+                if (dockicons == "topright")
+                { DockIcons(lockedPic2, AnchorStyles.Top | AnchorStyles.Right, 3, -3); }
+                lockedPic2.BackColor = Rhino.ApplicationSettings.AppearanceSettings.ViewportBackgroundColor;
+                lockedPic2.BringToFront();
+                ctrl.Controls.Add(lockedPic2);
+            }
+        }
+
+        private void OnToggle(object sender, EventArgs e)
+        {
+            if (viewportMenuItem.Checked)
+            { MyIni.Write("state", "true"); }
+            else
+            { MyIni.Write("state", "false"); }
+        }
+
+        public static void Dock(AnchorStyles anchor)
         {
             DockPanel(_viewportControlPanel, anchor);
         }
@@ -275,7 +405,7 @@ namespace GhCanvasViewport
         {
             if (ctrl == null)
                 return;
-            var canvas = Grasshopper.Instances.ActiveCanvas;
+            var canvas = Instances.ActiveCanvas;
             var canvasSize = canvas.ClientSize;
             int xEnd = 0;
             if ((anchor & AnchorStyles.Right) == AnchorStyles.Right)
@@ -284,8 +414,24 @@ namespace GhCanvasViewport
             if ((anchor & AnchorStyles.Bottom) == AnchorStyles.Bottom)
                 yEnd = canvasSize.Height - ctrl.Height;
 
-            ctrl.Location = new System.Drawing.Point(xEnd, yEnd);
+            ctrl.Location = new Point(xEnd, yEnd);
             ctrl.Anchor = anchor;
+        }
+        public static void DockIcons(Control ctrl2, AnchorStyles anchor, int y, int x)
+        {
+            if (ctrl2 == null)
+                return;
+            var canvas = ctrl;//Instances.ActiveCanvas;
+            var canvasSize = canvas.ClientSize;
+            int xEnd = 0;
+            if ((anchor & AnchorStyles.Right) == AnchorStyles.Right)
+                xEnd = canvasSize.Width - ctrl2.Width;
+            int yEnd = 0;
+            if ((anchor & AnchorStyles.Bottom) == AnchorStyles.Bottom)
+                yEnd = canvasSize.Height - ctrl2.Height;
+
+            ctrl2.Location = new Point(xEnd + x, yEnd + y);
+            ctrl2.Anchor = anchor;
         }
     }
 }
