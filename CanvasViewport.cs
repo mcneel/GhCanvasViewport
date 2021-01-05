@@ -3,6 +3,8 @@ using System.Drawing;
 using System.Windows.Forms;
 using GhCanvasViewport.Properties;
 using Grasshopper;
+using Grasshopper.Kernel;
+using Rhino.Display;
 using RhinoWindows.Forms.Controls;
 
 namespace GhCanvasViewport
@@ -15,7 +17,7 @@ namespace GhCanvasViewport
         static PictureBox lockedPic1;
         static PictureBox lockedPic2;
         public static ToolStripMenuItem viewportMenuItem;
-        static IniFile MyIni = new IniFile(Folders.AppDataFolder + "GhCanvasViewport.ini");
+        public static GH_SettingsServer settings = new GH_SettingsServer("GhCanvasViewport", true);
 
         public void AddToMenu()
         {
@@ -29,28 +31,12 @@ namespace GhCanvasViewport
 
         public void SetupMenu(object sender, EventArgs e)
         {
-            if (!MyIni.KeyExists("state"))
-            { MyIni.Write("state", "false"); }
-            if (!MyIni.KeyExists("width"))
-            { MyIni.Write("width", "400"); }
-            if (!MyIni.KeyExists("height"))
-            { MyIni.Write("height", "300"); }
-            if (!MyIni.KeyExists("dock"))
-            { MyIni.Write("dock", "topleft"); }
-            if (!MyIni.KeyExists("locked1"))
-            { MyIni.Write("locked1", "false"); }
-            if (!MyIni.KeyExists("locked2"))
-            { MyIni.Write("locked2", "false"); }
-            if (!MyIni.KeyExists("icontoggle"))
-            { MyIni.Write("icontoggle", "false"); }
-            if (!MyIni.KeyExists("dockicons"))
-            { MyIni.Write("dockicons", "topleft"); }
-            if (!MyIni.KeyExists("iconstyle"))
-            { MyIni.Write("iconstyle", "colored"); }
-            var state = bool.Parse(MyIni.Read("state"));
-            var width = int.Parse(MyIni.Read("width"));
-            var height = int.Parse(MyIni.Read("height"));
-            var dock = MyIni.Read("dock");
+            if (!settings.ConstainsEntry("state"))
+            { DefaultSettings(); }
+            bool state = settings.GetValue("state", false);
+            int width = settings.GetValue("width", 400);
+            int height = settings.GetValue("height", 300);
+            string dock = settings.GetValue("dock", "topleft");
 
             var editor = Instances.DocumentEditor;
             if (null == editor || editor.Handle == IntPtr.Zero)
@@ -105,14 +91,16 @@ namespace GhCanvasViewport
                                         { Dock(AnchorStyles.Top | AnchorStyles.Right); }
                                     }
                                     _viewportControlPanel.Show();
-                                    MyIni.Write("state", "true");
+                                    settings.SetValue("state", true);
+                                    settings.WritePersistentSettings();
                                 }
                                 else
                                 {
                                     if (_viewportControlPanel != null && _viewportControlPanel.Visible)
                                     {
                                         _viewportControlPanel.Hide();
-                                        MyIni.Write("state", "false");
+                                        settings.SetValue("state", false);
+                                        settings.WritePersistentSettings();
                                     }
                                 }
                                 viewportMenuItem.CheckedChanged += ViewportMenuItem_CheckedChanged;
@@ -271,8 +259,9 @@ namespace GhCanvasViewport
                         }
                     }
                     SetBounds(x, y, width, height);
-                    MyIni.Write("width", width.ToString());
-                    MyIni.Write("height", height.ToString());
+                    settings.SetValue("width", width);
+                    settings.SetValue("height", height);
+                    settings.WritePersistentSettings();
                 }
                 base.OnMouseMove(e);
             }
@@ -292,9 +281,9 @@ namespace GhCanvasViewport
                 Rhino.UI.Dialogs.ShowMessage("Canvas viewport requires Rhino 6.3 or greater version", "New Version Required");
                 return;
             }
-            var width = int.Parse(MyIni.Read("width"));
-            var height = int.Parse(MyIni.Read("height"));
-            var dock = MyIni.Read("dock");
+            int width = settings.GetValue("width", 400);
+            int height = settings.GetValue("height", 300);
+            string dock = settings.GetValue("dock", "topleft");
 
             var menuitem = sender as ToolStripMenuItem;
             if (menuitem != null)
@@ -324,14 +313,16 @@ namespace GhCanvasViewport
                         { Dock(AnchorStyles.Top | AnchorStyles.Right); }
                     }
                     _viewportControlPanel.Show();
-                    MyIni.Write("state", "true");
+                    settings.SetValue("state", true);
+                    settings.WritePersistentSettings();
                 }
                 else
                 {
                     if (_viewportControlPanel != null && _viewportControlPanel.Visible)
                     {
                         _viewportControlPanel.Hide();
-                        MyIni.Write("state", "false");
+                        settings.SetValue("state", false);
+                        settings.WritePersistentSettings();
                     }
                 }
             }
@@ -344,14 +335,14 @@ namespace GhCanvasViewport
                 ctrl.Controls.Remove(lockedPic1);
                 ctrl.Controls.Remove(lockedPic2);
             }
-            bool icontoggle = bool.Parse(MyIni.Read("icontoggle"));
+            bool icontoggle = settings.GetValue("icontoggle", false);
             if (!icontoggle)
             {
-                var dockicons = MyIni.Read("dockicons");
-                var iconstyle = MyIni.Read("iconstyle");
-                bool locked1 = bool.Parse(MyIni.Read("locked1"));
+                string dockicons = settings.GetValue("dockicons", "topleft");
+                string iconstyle = settings.GetValue("iconstyle", "colored");
+                bool locked1 = settings.GetValue("locked1", false);
                 lockedPic1 = new PictureBox();
-                bool locked2 = bool.Parse(MyIni.Read("locked2"));
+                bool locked2 = settings.GetValue("locked2", false);
                 lockedPic2 = new PictureBox();
                 if (locked1)
                 { if (iconstyle == "colored") { lockedPic1.Image = Resources.rotation_off; } else { lockedPic1.Image = Resources.rotation_off_s; } }
@@ -387,20 +378,17 @@ namespace GhCanvasViewport
                 ctrl.Controls.Add(lockedPic2);
             }
         }
-
         private void OnToggle(object sender, EventArgs e)
         {
             if (viewportMenuItem.Checked)
-            { MyIni.Write("state", "true"); }
+            { settings.SetValue("state", true); settings.WritePersistentSettings(); }
             else
-            { MyIni.Write("state", "false"); }
+            { settings.SetValue("state", false); settings.WritePersistentSettings(); }
         }
-
         public static void Dock(AnchorStyles anchor)
         {
             DockPanel(_viewportControlPanel, anchor);
         }
-
         public static void DockPanel(Control ctrl, AnchorStyles anchor)
         {
             if (ctrl == null)
@@ -432,6 +420,25 @@ namespace GhCanvasViewport
 
             ctrl2.Location = new Point(xEnd + x, yEnd + y);
             ctrl2.Anchor = anchor;
+        }
+        public static void DefaultSettings()
+        {
+            settings.SetValue("state", false);
+            settings.SetValue("width", 400);
+            settings.SetValue("height", 300);
+            settings.SetValue("dock", "topleft");
+            settings.SetValue("locked1", false);
+            settings.SetValue("locked2", false);
+            settings.SetValue("icontoggle", false);
+            settings.SetValue("dockicons", "topleft");
+            settings.SetValue("iconstyle", "colored");
+            settings.SetValue("view", "Perspective");
+            var wireframe = DisplayModeDescription.FindByName("Wireframe");
+            settings.SetValue("displaymode", wireframe.Id.ToString());
+            settings.SetValue("gridtoggle", true);
+            settings.SetValue("axestoggle", true);
+            settings.SetValue("worldtoggle", true);
+            settings.WritePersistentSettings();
         }
     }
 }
