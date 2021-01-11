@@ -15,7 +15,7 @@ namespace GhCanvasViewport
             bool gridtoggle = CanvasViewport.settings.GetValue("gridtoggle", true);
             bool axestoggle = CanvasViewport.settings.GetValue("axestoggle", true);
             bool worldtoggle = CanvasViewport.settings.GetValue("worldtoggle", true);
-
+            Viewport.DisplayMode = DisplayModeDescription.FindByName(CanvasViewport.settings.GetValue("displaymode", "Wireframe"));
             Viewport.ConstructionGridVisible = gridtoggle;
             Viewport.ConstructionAxesVisible = axestoggle;
             Viewport.WorldAxesVisible = worldtoggle;
@@ -139,10 +139,9 @@ namespace GhCanvasViewport
 
             contextMenu.MenuItems.Add(lockMenuMain);
 
-            var wireframe = DisplayModeDescription.FindByName("Wireframe");
             var displayModeMenu = new MenuItem("Display Mode");
-
-            var displaymode = Guid.Parse(CanvasViewport.settings.GetValue("displaymode", wireframe.Id.ToString()));
+            var displayModeName = DisplayModeDescription.FindByName(CanvasViewport.settings.GetValue("displaymode", "Wireframe"));
+            Guid displaymode = displayModeName.Id;
             var modes = DisplayModeDescription.GetDisplayModes();
             var currentModeId = displaymode;
             if (Viewport.DisplayMode != null)
@@ -156,7 +155,11 @@ namespace GhCanvasViewport
                 modeMenuItem.Click += (s, e) =>
                 {
                     Viewport.DisplayMode = mode;
-                    CanvasViewport.settings.SetValue("displaymode", mode.Id.ToString());
+                    if (Viewport.DisplayMode.LocalName == "V-Ray Interactive" || Viewport.DisplayMode.LocalName == "Raytraced")
+                    { CanvasViewport.settings.SetValue("iconoffset", true); }
+                    else
+                    { CanvasViewport.settings.SetValue("iconoffset", false); }
+                    CanvasViewport.settings.SetValue("displaymode", mode.LocalName);
                     CanvasViewport.settings.WritePersistentSettings();
                     CanvasViewport.UpdateViewport(true);
                     Invalidate();
@@ -294,16 +297,17 @@ namespace GhCanvasViewport
                 CanvasViewport.settings.SetValue("locked1", false);
                 CanvasViewport.settings.SetValue("locked2", false);
                 CanvasViewport.settings.SetValue("icontoggle", false);
+                CanvasViewport.settings.SetValue("iconoffset", false);
                 CanvasViewport.settings.SetValue("dockicons", "topleft");
                 CanvasViewport.settings.SetValue("iconstyle", "colored");
                 CanvasViewport.settings.SetValue("view", "Perspective");
-                CanvasViewport.settings.SetValue("displaymode", wireframe.Id.ToString());
+                CanvasViewport.settings.SetValue("displaymode", "Wireframe");
                 CanvasViewport.settings.SetValue("gridtoggle", true);
                 CanvasViewport.settings.SetValue("axestoggle", true);
                 CanvasViewport.settings.SetValue("worldtoggle", true);
                 CanvasViewport.settings.WritePersistentSettings();
                 CanvasViewport.UpdateViewport(true);
-                Viewport.DisplayMode = wireframe;
+                Viewport.DisplayMode = DisplayModeDescription.FindByName("Wireframe");
                 Viewport.WorldAxesVisible = true;
                 Viewport.ConstructionAxesVisible = true;
                 Viewport.ConstructionGridVisible = true;

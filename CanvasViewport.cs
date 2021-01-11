@@ -1,10 +1,10 @@
 ﻿using System;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Windows.Forms;
 using GhCanvasViewport.Properties;
 using Grasshopper;
 using Grasshopper.Kernel;
-using Rhino.Display;
 using RhinoWindows.Forms.Controls;
 
 namespace GhCanvasViewport
@@ -340,44 +340,63 @@ namespace GhCanvasViewport
             {
                 string dockicons = settings.GetValue("dockicons", "topleft");
                 string iconstyle = settings.GetValue("iconstyle", "colored");
+                bool iconoffset = settings.GetValue("iconoffset", false);
                 bool locked1 = settings.GetValue("locked1", false);
                 lockedPic1 = new PictureBox();
                 bool locked2 = settings.GetValue("locked2", false);
                 lockedPic2 = new PictureBox();
                 if (locked1)
-                { if (iconstyle == "colored") { lockedPic1.Image = Resources.rotation_off; } else { lockedPic1.Image = Resources.rotation_off_s; } }
+                { if (iconstyle == "colored") { lockedPic1.Image = Resources.rotation_off; } else { lockedPic1.Region = CreateRegion(Resources.rotation_off_s); lockedPic1.Image = Resources.rotation_off_s; } }
                 else
-                { if (iconstyle == "colored") { lockedPic1.Image = Resources.rotation_on; } else { lockedPic1.Image = Resources.rotation_on_s; } }
+                { if (iconstyle == "colored") { lockedPic1.Image = Resources.rotation_on; } else { lockedPic1.Region = CreateRegion(Resources.rotation_on_s); lockedPic1.Image = Resources.rotation_on_s; } }
                 lockedPic1.Size = new Size(16, 16);
+                int offset = -3;
+                if (iconoffset)
+                { offset = -14; }
                 if (dockicons == "topleft")
                 { DockIcons(lockedPic1, AnchorStyles.Top | AnchorStyles.Left, 3, 3); }
                 if (dockicons == "bottomleft")
-                { DockIcons(lockedPic1, AnchorStyles.Bottom | AnchorStyles.Left, -3, 3); }
+                { DockIcons(lockedPic1, AnchorStyles.Bottom | AnchorStyles.Left, offset, 3); }
                 if (dockicons == "bottomright")
-                { DockIcons(lockedPic1, AnchorStyles.Bottom | AnchorStyles.Right, -3, -24); }
+                { DockIcons(lockedPic1, AnchorStyles.Bottom | AnchorStyles.Right, offset, -22); }
                 if (dockicons == "topright")
-                { DockIcons(lockedPic1, AnchorStyles.Top | AnchorStyles.Right, 3, -24); }
-                lockedPic1.BackColor = Rhino.ApplicationSettings.AppearanceSettings.ViewportBackgroundColor;
-                lockedPic1.BringToFront();
+                { DockIcons(lockedPic1, AnchorStyles.Top | AnchorStyles.Right, 3, -22); }
                 ctrl.Controls.Add(lockedPic1);
                 if (locked2)
-                { if (iconstyle == "colored") { lockedPic2.Image = Resources.drag_off; } else { lockedPic2.Image = Resources.drag_off_s; } }
+                { if (iconstyle == "colored") { lockedPic2.Image = Resources.drag_off; } else { lockedPic2.Region = CreateRegion(Resources.drag_off_s); lockedPic2.Image = Resources.drag_off_s; } }
                 else
-                { if (iconstyle == "colored") { lockedPic2.Image = Resources.drag_on; } else { lockedPic2.Image = Resources.drag_on_s; } }
+                { if (iconstyle == "colored") { lockedPic2.Image = Resources.drag_on; } else { lockedPic2.Region = CreateRegion(Resources.drag_on_s); lockedPic2.Image = Resources.drag_on_s; } }
                 lockedPic2.Size = new Size(16, 16);
                 if (dockicons == "topleft")
-                { DockIcons(lockedPic2, AnchorStyles.Top | AnchorStyles.Left, 3, 24); }
+                { DockIcons(lockedPic2, AnchorStyles.Top | AnchorStyles.Left, 3, 22); }
                 if (dockicons == "bottomleft")
-                { DockIcons(lockedPic2, AnchorStyles.Bottom | AnchorStyles.Left, -3, 24); }
+                { DockIcons(lockedPic2, AnchorStyles.Bottom | AnchorStyles.Left, offset, 22); }
                 if (dockicons == "bottomright")
-                { DockIcons(lockedPic2, AnchorStyles.Bottom | AnchorStyles.Right, -3, -3); }
+                { DockIcons(lockedPic2, AnchorStyles.Bottom | AnchorStyles.Right, offset, -3); }
                 if (dockicons == "topright")
                 { DockIcons(lockedPic2, AnchorStyles.Top | AnchorStyles.Right, 3, -3); }
-                lockedPic2.BackColor = Rhino.ApplicationSettings.AppearanceSettings.ViewportBackgroundColor;
-                lockedPic2.BringToFront();
                 ctrl.Controls.Add(lockedPic2);
             }
         }
+
+        private static Region CreateRegion(Bitmap maskImage)
+        {
+            Color mask = maskImage.GetPixel(0, 0);
+            GraphicsPath graphicsPath = new GraphicsPath();
+            for (int x = 0; x < maskImage.Width; x++)
+            {
+                for (int y = 0; y < maskImage.Height; y++)
+                {
+                    if (!maskImage.GetPixel(x, y).Equals(mask))
+                    {
+                        graphicsPath.AddRectangle(new Rectangle(x, y, 1, 1));
+                    }
+                }
+            }
+
+            return new Region(graphicsPath);
+        }
+
         private void OnToggle(object sender, EventArgs e)
         {
             if (viewportMenuItem.Checked)
@@ -409,7 +428,7 @@ namespace GhCanvasViewport
         {
             if (ctrl2 == null)
                 return;
-            var canvas = ctrl;//Instances.ActiveCanvas;
+            var canvas = ctrl;
             var canvasSize = canvas.ClientSize;
             int xEnd = 0;
             if ((anchor & AnchorStyles.Right) == AnchorStyles.Right)
@@ -430,11 +449,11 @@ namespace GhCanvasViewport
             settings.SetValue("locked1", false);
             settings.SetValue("locked2", false);
             settings.SetValue("icontoggle", false);
+            settings.SetValue("iconoffset", false);
             settings.SetValue("dockicons", "topleft");
             settings.SetValue("iconstyle", "colored");
             settings.SetValue("view", "Perspective");
-            var wireframe = DisplayModeDescription.FindByName("Wireframe");
-            settings.SetValue("displaymode", wireframe.Id.ToString());
+            settings.SetValue("displaymode", "Wireframe");
             settings.SetValue("gridtoggle", true);
             settings.SetValue("axestoggle", true);
             settings.SetValue("worldtoggle", true);
