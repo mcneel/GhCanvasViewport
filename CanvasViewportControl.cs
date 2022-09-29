@@ -48,6 +48,13 @@ namespace GhCanvasViewport
             }
             RightMouseDownLocation = System.Drawing.Point.Empty;
         }
+        
+        protected override void OnMouseWheel(MouseEventArgs e)
+        {
+            Rhino.Geometry.Vector3d vec = Viewport.CameraDirection;
+            Viewport.SetCameraLocation(Viewport.CameraLocation + vec * e.Delta,false);
+            Refresh();
+        }
 
         void ShowContextMenu(System.Drawing.Point location)
         {
