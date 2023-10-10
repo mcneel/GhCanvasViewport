@@ -2,8 +2,6 @@
   <PropertyGroup>
     <TargetFrameworks>net45;net7.0-windows</TargetFrameworks>
     <TargetExt>.gha</TargetExt>
-    <GenerateAssemblyInfo>false</GenerateAssemblyInfo>
-    <Deterministic>false</Deterministic>
     <UseWindowsForms>true</UseWindowsForms>
     <EnableWindowsTargeting>true</EnableWindowsTargeting>
     <NoWarn>NU1701</NoWarn>

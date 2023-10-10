@@ -1,0 +1,63 @@
+name: Build
+on:
+  push:
+    tags: [ '*' ]
+    branches: [ master ]
+  pull_request:
+  workflow_dispatch:
+
+env:
+  BuildVersion: 1.0.2
+  BuildParameters: "-c Release /consoleloggerparameters:NoSummary"
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/setup-dotnet@v3
+        with:
+          dotnet-version: '7.0.x'
+
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Build
+        run: dotnet build ${{ env.BuildParameters }} /p:Version=${{ env.BuildVersion }}
+
+      - name: Download yak.exe
+        run: curl http://files.mcneel.com/yak/tools/latest/yak.exe -o yak.exe
+        shell: bash
+
+      - name: Package up yak
+        run: |
+          copy bin\Release\net45\GhCanvasViewport.gha dist
+          cd dist
+          ..\yak.exe build --version "${{ env.BuildVersion }}" --platform win
+
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v3
+        with:
+          name: yak
+          path: dist/*.yak
+
+  publish:
+    needs: [ build ]
+    runs-on: windows-latest
+    if: (github.event_name == 'workflow_dispatch')
+    steps:
+      - name: Download artifacts
+        uses: actions/download-artifact@v3
+        with:
+          name: yak
+
+      - name: Download yak.exe
+        run: curl http://files.mcneel.com/yak/tools/latest/yak.exe -o yak.exe
+
+      - name: Publish to public package server
+        run: |
+          $pkg=$(ls *.yak)
+          echo $pkg
+          .\yak.exe push $pkg[0]
+        env:
+          YAK_TOKEN: ${{ secrets.YAK_TOKEN }}
+
