@@ -1,10 +1,10 @@
 version: '{build}'
-image: Visual Studio 2019
+image: Visual Studio 2022
 configuration: Release
 
 environment:
   # set version number for plug-in and yak package
-  assembly_version: 1.0.1
+  assembly_version: 1.0.2
   yak_package_version: $(assembly_version)
 
   # set auth token for yak
@@ -30,7 +30,7 @@ build:
 before_deploy:
   - curl -fSLo yak.exe https://files.mcneel.com/yak/tools/latest/yak.exe
     && yak.exe version
-    && copy bin\GhCanvasViewport.gha dist
+    && copy bin\Release\net45\GhCanvasViewport.gha dist
     && cd dist
     && ..\yak.exe build --version "%yak_package_version%" --platform win
     && cd ..
