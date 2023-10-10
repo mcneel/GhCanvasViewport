@@ -1,0 +1,32 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Rhino 6 Windows",
+            "type": "clr",
+            "request": "launch",
+            "targetArchitecture": "x86_64",
+            "program": "C:\\Program Files\\Rhino 6\\System\\Rhino.exe",
+            "cwd": "${workspaceRoot}",
+        },
+        {
+            "name": "Rhino 7 Windows",
+            "type": "clr",
+            "request": "launch",
+            "targetArchitecture": "x86_64",
+            "program": "C:\\Program Files\\Rhino 7\\System\\Rhino.exe",
+            "cwd": "${workspaceRoot}",
+        },
+        {
+            "name": "Rhino 8 Windows",
+            "type": "coreclr",
+            "request": "launch",
+            "targetArchitecture": "x86_64",
+            "program": "C:\\Program Files\\Rhino 8\\System\\Rhino.exe",
+            "cwd": "${workspaceRoot}",
+        }
+    ]
+}

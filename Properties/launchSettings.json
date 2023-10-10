@@ -1,0 +1,22 @@
+{
+  "profiles": {
+    "Rhino 6": {
+      "commandName": "Executable",
+      "executablePath": "C:\\Program Files\\Rhino 6\\System\\Rhino.exe"
+    },
+    "Rhino 7": {
+      "commandName": "Executable",
+      "executablePath": "C:\\Program Files\\Rhino 7\\System\\Rhino.exe"
+    },
+    "Rhino 8 netcore": {
+      "commandName": "Executable",
+      "executablePath": "C:\\Program Files\\Rhino 8\\System\\Rhino.exe",
+      "commandLineArgs": "/netcore"
+    },
+    "Rhino 8 netfx": {
+      "commandName": "Executable",
+      "executablePath": "C:\\Program Files\\Rhino 8\\System\\Rhino.exe",
+      "commandLineArgs": "/netfx"
+    }
+  }
+}

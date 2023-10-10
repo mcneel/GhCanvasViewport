@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace GhCanvasViewport
@@ -51,9 +52,9 @@ namespace GhCanvasViewport
 
         void ShowContextMenu(System.Drawing.Point location)
         {
-            var contextMenu = new ContextMenu();
+            var contextMenu = new ContextMenuStrip();
 
-            var displayModeMenu = new MenuItem("Display Mode");
+            var displayModeMenu = new ToolStripMenuItem("Display Mode");
             var modes = Rhino.Display.DisplayModeDescription.GetDisplayModes();
             var currentModeId = Guid.Empty;
             if (Viewport.DisplayMode != null)
@@ -61,58 +62,83 @@ namespace GhCanvasViewport
 
             foreach (var mode in modes)
             {
-                var modeMenuItem = new MenuItem(mode.LocalName);
-                modeMenuItem.RadioCheck = true;
+                var modeMenuItem = new ToolStripMenuItem(mode.LocalName);
+                modeMenuItem.Checked = true;
                 modeMenuItem.Checked = (currentModeId == mode.Id);
                 modeMenuItem.Click += (s, e) => 
                 {
                     Viewport.DisplayMode = mode;
                     Invalidate();
                 };
-                displayModeMenu.MenuItems.Add(modeMenuItem);
+                displayModeMenu.DropDownItems.Add(modeMenuItem);
                 displayModeMenu.Tag = mode.Id;
             }
-            contextMenu.MenuItems.Add(displayModeMenu);
+            contextMenu.Items.Add(displayModeMenu);
 
-            var dockMenu = new MenuItem("Dock");
-            var mnu = new MenuItem("Top Left");
-            mnu.RadioCheck = true;
+            var dockMenu = new ToolStripMenuItem("Dock");
+            var mnu = new ToolStripRadioMenuItem("Top Left");
+            mnu.Checked = true;
             mnu.Click += (s, args) => CanvasViewport.DockPanel(Parent, AnchorStyles.Top | AnchorStyles.Left);
-            dockMenu.MenuItems.Add(mnu);
-            mnu = new MenuItem("Top Right");
-            mnu.RadioCheck = true;
+            dockMenu.DropDownItems.Add(mnu);
+            mnu = new ToolStripRadioMenuItem("Top Right");
+            mnu.Checked = true;
             mnu.Click += (s, args) => CanvasViewport.DockPanel(Parent, AnchorStyles.Top | AnchorStyles.Right);
-            dockMenu.MenuItems.Add(mnu);
-            mnu = new MenuItem("Bottom Left");
-            mnu.RadioCheck = true;
+            dockMenu.DropDownItems.Add(mnu);
+            mnu = new ToolStripRadioMenuItem("Bottom Left");
+            mnu.Checked = true;
             mnu.Click += (s, args) => CanvasViewport.DockPanel(Parent, AnchorStyles.Bottom | AnchorStyles.Left);
-            dockMenu.MenuItems.Add(mnu);
-            mnu = new MenuItem("Bottom Right");
-            mnu.RadioCheck = true;
+            dockMenu.DropDownItems.Add(mnu);
+            mnu = new ToolStripRadioMenuItem("Bottom Right");
+            mnu.Checked = true;
             mnu.Click += (s, args) => CanvasViewport.DockPanel(Parent, AnchorStyles.Bottom | AnchorStyles.Right);
-            dockMenu.MenuItems.Add(mnu);
-            contextMenu.MenuItems.Add(dockMenu);
-            dockMenu.Popup += (s, args) =>
+            dockMenu.DropDownItems.Add(mnu);
+            contextMenu.Items.Add(dockMenu);
+            dockMenu.DropDownOpening += (s, args) =>
             {
                 var anchor = this.Parent.Anchor;
-                dockMenu.MenuItems[0].Checked = (anchor == (AnchorStyles.Top | AnchorStyles.Left));
-                dockMenu.MenuItems[1].Checked = (anchor == (AnchorStyles.Bottom | AnchorStyles.Left));
-                dockMenu.MenuItems[2].Checked = (anchor == (AnchorStyles.Top | AnchorStyles.Right));
-                dockMenu.MenuItems[3].Checked = (anchor == (AnchorStyles.Bottom | AnchorStyles.Right));
+                
+                ((ToolStripMenuItem)dockMenu.DropDownItems[0]).Checked = (anchor == (AnchorStyles.Top | AnchorStyles.Left));
+                ((ToolStripMenuItem)dockMenu.DropDownItems[1]).Checked = (anchor == (AnchorStyles.Bottom | AnchorStyles.Left));
+                ((ToolStripMenuItem)dockMenu.DropDownItems[2]).Checked = (anchor == (AnchorStyles.Top | AnchorStyles.Right));
+                ((ToolStripMenuItem)dockMenu.DropDownItems[3]).Checked = (anchor == (AnchorStyles.Bottom | AnchorStyles.Right));
             };
 
-            contextMenu.MenuItems.Add("Zoom Extents", (s, e) =>
+            contextMenu.Items.Add("Zoom Extents", null, (s, e) =>
             {
                 Viewport.Camera35mmLensLength = 50;
                 Viewport.ZoomExtents();
                 Refresh();
             });
-            contextMenu.MenuItems.Add("Hide", (s, e) =>
+            contextMenu.Items.Add("Hide", null, (s, e) =>
             {
                 this.Parent.Hide();
             });
             contextMenu.Show(this, location);
 
+        }
+    }
+
+    class ToolStripRadioMenuItem : ToolStripMenuItem
+    {
+        public ToolStripRadioMenuItem(string text) : base(text)
+        {
+        }
+
+        protected override void OnClick(EventArgs e)
+        {
+            Checked = true;
+            if (OwnerItem is ToolStripMenuItem parent)
+            {
+                foreach (var item in parent.DropDownItems.OfType<ToolStripRadioMenuItem>())
+                {
+                    if (ReferenceEquals(this, item))
+                        continue;
+                        
+                    item.Checked = false;
+                }
+            }
+            
+            base.OnClick(e);
         }
     }
 }
