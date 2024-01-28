@@ -1,27 +1,52 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using Rhino.Runtime;
 
 namespace GhCanvasViewport
 {
-    class CanvasViewportControl : RhinoWindows.Forms.Controls.ViewportControl
+    public class CanvasViewportControl : RhinoWindows.Forms.Controls.ViewportControl
     {
+        //private int viewId = 0; // used when we choose add viewports (line 107)
+
+        public Rhino.Display.RhinoViewport RhinoViewport
+        {
+            get { return Viewport; }
+        }
+
         public CanvasViewportControl()
         {
             // stupid hack to get GH to draw preview geometry in this control
             this.Viewport.Name = "GH_HACK";
+
+            // this used when we choose add viewports (line 107)
+            //var views = Rhino.RhinoDoc.ActiveDoc.Views.ToList();   
+            //Viewport.Name = views[viewId].ActiveViewport.Name;
         }
 
+        static Icon customIcon = Properties.Resources.rot;
+        Cursor customCursor = new Cursor(customIcon.Handle);
+
         System.Drawing.Point RightMouseDownLocation { get; set; }
+        
         protected override void OnMouseDown(MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
-                RightMouseDownLocation = e.Location;
+            {
+                Cursor.Current = customCursor;
+                RightMouseDownLocation = e.Location;   
+            }
             else
+            {
+                Cursor.Current = Cursors.Hand;
                 RightMouseDownLocation = System.Drawing.Point.Empty;
+            }
             base.OnMouseDown(e);
         }
+        
         protected override void OnMouseMove(MouseEventArgs e)
         {
             if (e.Button == MouseButtons.Right)
@@ -30,15 +55,17 @@ namespace GhCanvasViewport
                 if (vec.Length > 10)
                     RightMouseDownLocation = System.Drawing.Point.Empty;
             }
+            
             else
             {
                 RightMouseDownLocation = System.Drawing.Point.Empty;
             }
-            base.OnMouseMove(e);
+            
+            base.OnMouseMove(e);  
         }
+
         protected override void OnMouseUp(MouseEventArgs e)
-        {
-            base.OnMouseUp(e);
+        {   
             if (e.Button == MouseButtons.Right)
             {
                 var vec = new Rhino.Geometry.Vector2d(e.X - RightMouseDownLocation.X, e.Y - RightMouseDownLocation.Y);
@@ -48,6 +75,7 @@ namespace GhCanvasViewport
                 }
             }
             RightMouseDownLocation = System.Drawing.Point.Empty;
+            base.OnMouseUp(e);
         }
 
         void ShowContextMenu(System.Drawing.Point location)
@@ -60,7 +88,7 @@ namespace GhCanvasViewport
             if (Viewport.DisplayMode != null)
                 currentModeId = Viewport.DisplayMode.Id;
 
-            foreach (var mode in modes)
+            foreach (Rhino.Display.DisplayModeDescription mode in modes)
             {
                 var modeMenuItem = new ToolStripMenuItem(mode.LocalName);
                 modeMenuItem.Checked = true;
@@ -74,6 +102,35 @@ namespace GhCanvasViewport
                 displayModeMenu.Tag = mode.Id;
             }
             contextMenu.Items.Add(displayModeMenu);
+
+            // in case the user prefer this instead of combobox
+            // add viewports
+            /*/
+            var viewsMenu = new ToolStripMenuItem("View");
+            var views = Rhino.RhinoDoc.ActiveDoc.Views;
+            var currentViewId = Viewport.Name;
+            //var projection = Rhino.Display.DefinedViewportProjection.Perspective;
+            foreach (Rhino.Display.RhinoView view in views)
+            {
+                var viewMenuItem = new ToolStripMenuItem(view.ActiveViewport.Name);
+                viewMenuItem.Checked = true;
+                viewMenuItem.Checked = (currentViewId == view.ActiveViewport.Name);
+                viewMenuItem.Click += (s, e) =>
+                {
+                    if (view.ActiveViewport.Name == "Top")
+                    { projection = Rhino.Display.DefinedViewportProjection.Top; viewId = 1; }
+                    else if (view.ActiveViewport.Name == "Front")
+                    { projection = Rhino.Display.DefinedViewportProjection.Front; viewId = 2; }
+                    else if (view.ActiveViewport.Name == "Right")
+                    { projection = Rhino.Display.DefinedViewportProjection.Right; viewId = 3; }
+                    Viewport.SetProjection(projection, view.ActiveViewport.Name, true);     
+                    Invalidate();
+                };
+                viewsMenu.DropDownItems.Add(viewMenuItem);
+                //viewsMenu.Tag = view.ActiveViewportID;
+            }
+            contextMenu.Items.Add(viewsMenu);
+            /*/
 
             var dockMenu = new ToolStripMenuItem("Dock");
             var mnu = new ToolStripRadioMenuItem("Top Left");
@@ -116,6 +173,7 @@ namespace GhCanvasViewport
             contextMenu.Show(this, location);
 
         }
+
     }
 
     class ToolStripRadioMenuItem : ToolStripMenuItem
